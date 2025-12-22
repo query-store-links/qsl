@@ -1,4 +1,9 @@
+using QueryStoreLinks.Helpers;
+
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure AllowUnsafeTls option from configuration (default: false)
+HttpClientProvider.AllowUnsafeTls = builder.Configuration.GetValue<bool>("AllowUnsafeTls", false);
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi

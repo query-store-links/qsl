@@ -21,8 +21,8 @@ namespace QueryStoreLinks.Helpers
             "https://fe3.delivery.mp.microsoft.com/ClientWebService/client.asmx/secured"
         );
 
-        // 默认 HttpClient（建议长期重用）
-        private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(20) };
+        // Accessor used by helpers
+        private static HttpClient Http => HttpClientProvider.Client;
 
         /// <summary>
         /// 解析输入框输入的字符串（去掉 URL 中的 path 与 query，只保留最后的 ID）
@@ -676,5 +676,26 @@ namespace QueryStoreLinks.Helpers
                 return (bytes / (double)KB).ToString("0.##", CultureInfo.InvariantCulture) + " KB";
             return bytes.ToString(CultureInfo.InvariantCulture) + " B";
         }
+    }
+
+    // HttpClient provider (namespace-level) used by the API and helpers
+    public static class HttpClientProvider
+    {
+        private static readonly HttpClientHandler _unsafeHandler = new()
+        {
+            ServerCertificateCustomValidationCallback =
+                HttpClientHandler.DangerousAcceptAnyServerCertificateValidator,
+        };
+
+        private static readonly HttpClient _safeClient = new() { Timeout = TimeSpan.FromSeconds(20) };
+        private static readonly HttpClient _unsafeClient = new(_unsafeHandler) { Timeout = TimeSpan.FromSeconds(20) };
+
+        /// <summary>
+        /// When true, the provider will return an HttpClient that accepts any server certificate.
+        /// Default is false.
+        /// </summary>
+        public static bool AllowUnsafeTls { get; set; } = false;
+
+        public static HttpClient Client => AllowUnsafeTls ? _unsafeClient : _safeClient;
     }
 }

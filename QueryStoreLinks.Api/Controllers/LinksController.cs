@@ -193,8 +193,6 @@ namespace QueryStoreLinks.Api.Controllers
         }
 
         // Ensure local ./xml/{fileName} exists; otherwise download from asset server and return content.
-        private static readonly HttpClient _http = new();
-
         private static async Task<string> GetOrDownloadTemplateAsync(
             string fileName,
             CancellationToken ct
@@ -219,7 +217,7 @@ namespace QueryStoreLinks.Api.Controllers
             {
                 Directory.CreateDirectory(localDir);
                 var url = $"https://assets.krnl64.win/qsl/xml/{fileName}";
-                using var resp = await _http.GetAsync(url, ct).ConfigureAwait(false);
+                using var resp = await HttpClientProvider.Client.GetAsync(url, ct).ConfigureAwait(false);
                 if (!resp.IsSuccessStatusCode)
                     return string.Empty;
                 var content = await resp.Content.ReadAsStringAsync(ct).ConfigureAwait(false);
