@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="QueryStoreLinks.Api/QueryStoreLinks.Api.csproj" />
+  <Project Path="QueryStoreLinks/QueryStoreLinks.csproj" />
+</Solution>
