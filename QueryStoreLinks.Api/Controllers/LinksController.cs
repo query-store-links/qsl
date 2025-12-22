@@ -4,6 +4,8 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Logging;
 using QueryStoreLinks.Helpers;
 
 namespace QueryStoreLinks.Api.Controllers
@@ -12,6 +14,15 @@ namespace QueryStoreLinks.Api.Controllers
     [Route("api/[controller]")]
     public class LinksController : ControllerBase
     {
+        private readonly IWebHostEnvironment _env;
+        private readonly ILogger<LinksController> _logger;
+
+        public LinksController(IWebHostEnvironment env, ILogger<LinksController> logger)
+        {
+            _env = env;
+            _logger = logger;
+        }
+
         [HttpPost("resolve-all")]
         public async Task<ActionResult<ResolveAllResponse>> ResolveAll(
             [FromBody] ResolveAllRequest req,
@@ -46,6 +57,7 @@ namespace QueryStoreLinks.Api.Controllers
                     catch (Exception ex)
                     {
                         errors.Add("Cookie error: " + ex.Message);
+                        await LogExceptionAsync(ex, "Cookie error", result.ProductId, req);
                     }
                 }
 
@@ -66,6 +78,7 @@ namespace QueryStoreLinks.Api.Controllers
                 catch (Exception ex)
                 {
                     errors.Add("AppInfo error: " + ex.Message);
+                    await LogExceptionAsync(ex, "AppInfo error", result.ProductId, req);
                 }
 
                 // File list
@@ -94,6 +107,7 @@ namespace QueryStoreLinks.Api.Controllers
                         catch (Exception ex)
                         {
                             errors.Add("FileList error: " + ex.Message);
+                            await LogExceptionAsync(ex, "FileList error", result.ProductId, req);
                         }
                     }
                 }
@@ -122,6 +136,7 @@ namespace QueryStoreLinks.Api.Controllers
                         catch (Exception ex)
                         {
                             errors.Add("Appx parse error: " + ex.Message);
+                            await LogExceptionAsync(ex, "Appx parse error", result.ProductId, req);
                         }
                     }
                 }
@@ -140,6 +155,7 @@ namespace QueryStoreLinks.Api.Controllers
                     catch (Exception ex)
                     {
                         errors.Add("NonAppx error: " + ex.Message);
+                        await LogExceptionAsync(ex, "NonAppx error", result.ProductId, req);
                     }
                 }
 
@@ -149,6 +165,30 @@ namespace QueryStoreLinks.Api.Controllers
             catch (OperationCanceledException)
             {
                 return StatusCode(499); // Client Closed Request
+            }
+        }
+
+        // Log full exception to configured logger and a local file (logs/exceptions.log). This ensures concise responses but preserves full trace in logs.
+        private async Task LogExceptionAsync(Exception ex, string context, string? productId, ResolveAllRequest? req)
+        {
+            try
+            {
+                _logger.LogError(ex, "{Context} for product {ProductId}", context, productId);
+
+                var logsDir = Path.Combine(AppContext.BaseDirectory, "logs");
+                Directory.CreateDirectory(logsDir);
+                var logFile = Path.Combine(logsDir, "exceptions.log");
+
+                var sb = new System.Text.StringBuilder();
+                sb.AppendLine($"[{DateTime.UtcNow:O}] {context} Product={productId} RequestInput={req?.ProductInput} Market={req?.Market} Locale={req?.Locale} Ring={req?.Ring}");
+                sb.AppendLine(ex.ToString());
+                sb.AppendLine("----");
+
+                await System.IO.File.AppendAllTextAsync(logFile, sb.ToString()).ConfigureAwait(false);
+            }
+            catch
+            {
+                // Silently ignore logging failures
             }
         }
 
