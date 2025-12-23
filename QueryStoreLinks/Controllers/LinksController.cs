@@ -33,7 +33,41 @@ namespace QueryStoreLinks.Controllers
             if (req == null)
                 return BadRequest("Request body is required.");
 
+            if (req.ProductInput == null)
+                return BadRequest("ProductInput is required.");
+
             var result = new ResolveAllResponse();
+
+            if (req.ProductInput.StartsWith("xp", StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.LogInformation("Detected Non-Appx ID: {Id}", req.ProductInput);
+
+                var nonAppxHandler = new NonAppxHandler();
+                await nonAppxHandler.QueryAsync(
+                    req.ProductInput,
+                    req.Locale ?? "en-US",
+                    req.Market ?? "US",
+                    ct
+                );
+
+                if (nonAppxHandler.IsFound)
+                {
+                    var (info, downloads) = await nonAppxHandler.ResolveDetailsAsync(ct);
+                    result.ProductId = req.ProductInput.ToUpper();
+                    result.AppInfo = info;
+                    result.NonAppxPackages = downloads;
+                    return Ok(result);
+                }
+                else
+                {
+                    return Ok(
+                        new ResolveAllResponse
+                        {
+                            Errors = new List<string> { "Non-Appx product not found." },
+                        }
+                    );
+                }
+            }
 
             DisplayCatalogHandler dcathandler = new DisplayCatalogHandler(
                 DCatEndpoint.Production,
