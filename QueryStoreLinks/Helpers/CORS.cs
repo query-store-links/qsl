@@ -45,8 +45,8 @@
                 // Host pattern may contain leading wildcard *.example.com
                 if (patHost.StartsWith("*.", StringComparison.Ordinal))
                 {
-                    var suffix = patHost.Substring(2);
-                    if (originHost.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
+                    var suffix = patHost.Substring(1);
+                    if (originHost.EndsWith(suffix, StringComparison.OrdinalIgnoreCase) || originHost.Equals(suffix.TrimStart('.'), StringComparison.OrdinalIgnoreCase))
                         return true;
                 }
                 else

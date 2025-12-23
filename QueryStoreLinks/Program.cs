@@ -38,8 +38,7 @@ namespace QueryStoreLinks
                                 return CORS.IsOriginAllowed(origin, allowedOrigins);
                             })
                             .AllowAnyHeader()
-                            .AllowAnyMethod()
-                            .AllowCredentials();
+                            .AllowAnyMethod();
                     }
                 );
             });
