@@ -1,0 +1,3 @@
+[submodule "External/StoreLib"]
+	path = External/StoreLib
+	url = https://github.com/query-store-links/StoreLib.git
