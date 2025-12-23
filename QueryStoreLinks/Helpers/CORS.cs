@@ -46,7 +46,13 @@
                 if (patHost.StartsWith("*.", StringComparison.Ordinal))
                 {
                     var suffix = patHost.Substring(1);
-                    if (originHost.EndsWith(suffix, StringComparison.OrdinalIgnoreCase) || originHost.Equals(suffix.TrimStart('.'), StringComparison.OrdinalIgnoreCase))
+                    if (
+                        originHost.EndsWith(suffix, StringComparison.OrdinalIgnoreCase)
+                        || originHost.Equals(
+                            suffix.TrimStart('.'),
+                            StringComparison.OrdinalIgnoreCase
+                        )
+                    )
                         return true;
                 }
                 else

@@ -134,9 +134,27 @@ namespace QueryStoreLinks.Controllers
                     ct
                 );
 
+                string fileName = string.Empty;
+
+                try
+                {
+                    fileName = await PackageHelper.GetFileName(package.PackageUri.ToString());
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(
+                        $"Failed to get file name for package URI: {package.PackageUri.ToString()} with execption {ex}"
+                    );
+                }
+
+                if (String.IsNullOrEmpty(fileName))
+                {
+                    fileName = package.PackageMoniker;
+                }
+
                 return new DownloadItem
                 {
-                    FileName = package.PackageMoniker,
+                    FileName = fileName,
                     FileLink = package.PackageUri.ToString(),
                     FileSize = fileSize,
                 };

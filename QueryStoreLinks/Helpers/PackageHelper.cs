@@ -1,4 +1,7 @@
-﻿using StoreLib.Services;
+﻿using System;
+using System.Net.Http.Headers;
+using System.Net.Mime;
+using StoreLib.Services;
 
 namespace QueryStoreLinks.Helpers
 {
@@ -48,6 +51,66 @@ namespace QueryStoreLinks.Helpers
             }
 
             return "Unknown";
+        }
+
+        public static async Task<string> GetFileName(string url, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+                return string.Empty;
+
+            async Task<HttpResponseMessage> SendAsync(HttpMethod method)
+            {
+                var req = new HttpRequestMessage(method, url);
+                req.Headers.TryAddWithoutValidation(
+                    "User-Agent",
+                    "Microsoft-Delivery-Optimization/10.0"
+                );
+
+                return await _httpClient.SendAsync(
+                    req,
+                    HttpCompletionOption.ResponseHeadersRead,
+                    ct
+                );
+            }
+
+            using var response = await SendAsync(HttpMethod.Head);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                response.Dispose();
+                using var getResponse = await SendAsync(HttpMethod.Get);
+                if (!getResponse.IsSuccessStatusCode)
+                    return string.Empty;
+
+                return ExtractFileName(getResponse, url);
+            }
+
+            return ExtractFileName(response, url);
+        }
+
+        private static string ExtractFileName(HttpResponseMessage response, string url)
+        {
+            var cd = response.Content.Headers.ContentDisposition;
+
+            if (!string.IsNullOrEmpty(cd?.FileNameStar))
+                return cd.FileNameStar.Trim('"');
+
+            if (!string.IsNullOrEmpty(cd?.FileName))
+                return cd.FileName.Trim('"');
+
+            try
+            {
+                var uri = new Uri(url);
+                var name = Path.GetFileName(uri.AbsolutePath);
+                if (!string.IsNullOrEmpty(name))
+                    return name;
+            }
+            catch
+            {
+                // ignore
+            }
+
+            return String.Empty;
         }
     }
 }
