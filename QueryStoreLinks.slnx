@@ -1,4 +1,7 @@
 <Solution>
-  <Project Path="QueryStoreLinks.Api/QueryStoreLinks.Api.csproj" />
+  <Folder Name="/External/" />
+  <Folder Name="/External/StoreLib/">
+    <Project Path="External/StoreLib/StoreLib/StoreLib.csproj" />
+  </Folder>
   <Project Path="QueryStoreLinks/QueryStoreLinks.csproj" />
 </Solution>
